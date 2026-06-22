@@ -4,7 +4,7 @@ AS = nasm
 LD = ld
 
 # Compiler flags for bare-metal 32-bit development
-CFLAGS = -m32 -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-pie
+CFLAGS = -m32 -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-pie -fno-pie
 ASFLAGS = -f elf32
 LDFLAGS = -m elf_i386 -T linker.ld
 
@@ -28,7 +28,7 @@ strawberry_os.bin: $(OBJ)
 
 # Run the OS inside the QEMU emulator
 run: strawberry_os.bin
-	qemu-system-i386 -kernel strawberry_os.bin
+	qemu-system-i386 -kernel strawberry_os.bin -display gtk
 
 # Clean up compiled files
 clean:
