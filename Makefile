@@ -4,7 +4,7 @@ AS = nasm
 LD = ld
 
 # Compiler flags for bare-metal 32-bit development
-CFLAGS = -m32 -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-pie -fno-pie
+CFLAGS = -m32 -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-pie -fno-pie -fno-stack-protector
 ASFLAGS = -f elf32
 LDFLAGS = -m elf_i386 -T linker.ld
 
