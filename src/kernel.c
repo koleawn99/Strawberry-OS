@@ -13,7 +13,7 @@ void kernel_main(void){
 
     //Create a color attribute byte:Pink text on a dark gray background
     //Shifted the background color left by 4 bits and combined it with foreground
-    char color_attribute = (COLOR_DARK_GRAY << 4) | COLOR_LIGHT_PINK;
+    char color_attribute = ((COLOR_DARK_GRAY << 4) | COLOR_LIGHT_PINK) >> 8;
 
     //Clear the screen by filling it with blank spaces
     for(int i = 0;i < SCREEN_WIDTH * SCREEN_HEIGHT; i++){
@@ -27,8 +27,8 @@ void kernel_main(void){
     //Print the string to the top left of the screen
     int i = 0;
     while (message[i] != '\0'){
-        video_memory[i * 2] = message[i]; //Write the letter ASCII code
-        video_memory[i * 2] = color_attribute; //Write the color style
+        //Combine the character byte with the color attribute bits
+        video_memory[i] =message[i] | color_attribute;
         i++;
     }
 
