@@ -23,7 +23,6 @@ void scroll_up(){
            video_memory[(row - 1) * SCREEN_WIDTH + col] = video_memory[row * SCREEN_WIDTH + col];  
        }
    }
-
    // Move the cursor variables to the start of the bottom row (Row 24)
    terminal_row = SCREEN_HEIGHT - 1; 
    terminal_column = 0;
@@ -32,16 +31,26 @@ void scroll_up(){
 
     //Clearning up the last row
     for(int i = 0; i < SCREEN_WIDTH; i++){
+        terminal_column = i;
+        terminal_row = SCREEN_HEIGHT - 1;
         terminal_putchar(' ');
        
    }
     is_scrolling = 0; //flag off
-
+    
+    terminal_row = SCREEN_HEIGHT - 1;
+    terminal_column = 0;
+    
 }
 
 
 //Write a single raw character onto the grid
 void terminal_putchar(char c){
+
+    //Implementig the scrolling mechanic(if we get past row 24)
+    if(terminal_row >= SCREEN_HEIGHT && is_scrolling == 0){     
+        scroll_up(); 
+    }
 
         //Handling special escape chars
     switch(c){
@@ -75,11 +84,7 @@ void terminal_putchar(char c){
         terminal_row++; 
     }
    
-    //Implementig the scrolling mechanic(if we get past row 24)
-    if(terminal_row >= SCREEN_HEIGHT && is_scrolling == 0){     
-        scroll_up();  
-        terminal_row = SCREEN_HEIGHT - 1;  //pulling the cursor back to the cleared up line
-          }
+
 }
 
 //Loop throgh an entire string array until the null terminator
