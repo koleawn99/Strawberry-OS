@@ -14,11 +14,22 @@ void termianl_putchar(char c){
 
         attribute = ((0 << 4) | 13) << 8;
 
-    //Handle the newline escape character
-    if (c == '\n'){
-        terminal_column = 0;
-        terminal_row++;
-        return;
+        //Handling special escape chars
+    switch(c){
+
+        //Handle the newline escape char
+        case '\n':
+            terminal_column = 0;
+            terminal_row++;
+            return;
+        //Handle the tab-advance char
+        case '\t':
+            terminal_column += 4;
+            return;
+        //Handle the carriage return;
+        case '\r':
+            terminal_column = 0;
+            return;
     }
     
     //Map out the 1D absolute index from 2D coordinates
@@ -40,7 +51,7 @@ void termianl_putchar(char c){
 void terminal_initalize(void) 
 {
     
- 
+                
     for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
         video_memory[i] = ' ' | attribute;
     }
@@ -60,6 +71,7 @@ void terminal_write_string(const char* data){
     }
 }
 
+
 void kernel_main(void){
     //Initialize the clean canvas
     terminal_initalize();
@@ -67,6 +79,6 @@ void kernel_main(void){
     //Using the new print function
     terminal_write_string("Welcome to Strawberry OS!\n");
     terminal_write_string("-------------------------\n");
-    terminal_write_string("The core print engine is alive.\n");
-    terminal_write_string("Strawberry OS is booting up! Let's check how the lines wrap when the text hits eighty characters.\n");
+    terminal_write_string("carriage return is working\rIf this sentence is correct,");
+    terminal_write_string("\ntestig\tthe\ttab_advance\n");
 }
