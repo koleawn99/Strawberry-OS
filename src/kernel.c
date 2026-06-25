@@ -2,6 +2,24 @@
 #define SCREEN_HEIGHT 25
 #define VGA_ADRESS 0xB8000
 
+// Strictly enforces 8-bit (byte) outb operations to avoid compiler register-size inflation
+static inline void outb(unsigned short port, unsigned char val) {
+    __asm__ __volatile__ ("outb %b0, %w1" : : "a"(val), "Nd"(port));
+}
+
+void update_cursor(int row, int col){
+    //Calculating the cursor position
+    unsigned short position = row * SCREEN_WIDTH + col;
+
+    // Tell the VGA chip the program is sending the LOW byte (Command 0x0F)
+    outb(0x3D4, 0x0F);
+    outb(0x3D5, (unsigned char)(position & 0xFF));
+
+    // Tell the VGA chip the program is sending the HIGH byte (Command 0x0E)
+    outb(0x3D4, 0x0E);
+    outb(0x3D5, (unsigned char)((position >> 8) & 0xFF));
+}
+
 // Prototypes: Telling the compiler these functions exist somewhere down below
 void scroll_up(void);
 void terminal_putchar(char c);
@@ -20,7 +38,7 @@ void scroll_up(){
    for(int row = 1; row < SCREEN_HEIGHT; row++){    //rows counter(1 to 24)
        for(int col = 0; col < SCREEN_WIDTH; col++){    //columns counter(1 to 79)
             //Copying the rows and pasting them to the row above
-           video_memory[(row - 1) * SCREEN_WIDTH + col] = video_memory[row * SCREEN_WIDTH + col];  
+            video_memory[(row - 1) * SCREEN_WIDTH + col] = video_memory[row * SCREEN_WIDTH + col];
        }
    }
    // Move the cursor variables to the start of the bottom row (Row 24)
@@ -33,7 +51,7 @@ void scroll_up(){
     for(int i = 0; i < SCREEN_WIDTH; i++){
         terminal_column = i;
         terminal_row = SCREEN_HEIGHT - 1;
-        terminal_putchar(' ');
+        video_memory[(SCREEN_HEIGHT - 1) * SCREEN_WIDTH + i] = ' ' | attribute;
        
    }
     is_scrolling = 0; //flag off
@@ -49,7 +67,8 @@ void terminal_putchar(char c){
 
     //Implementig the scrolling mechanic(if we get past row 24)
     if(terminal_row >= SCREEN_HEIGHT && is_scrolling == 0){     
-        scroll_up(); 
+        scroll_up();
+
     }
 
         //Handling special escape chars
@@ -59,14 +78,21 @@ void terminal_putchar(char c){
         case '\n':
             terminal_column = 0;
             terminal_row++;
-            return;
-        //Handle the tab-advance char
+
+            if (terminal_row >= SCREEN_HEIGHT)
+            scroll_up();
+
+        update_cursor(terminal_row, terminal_column);
+        return;
+       //Handle the tab-advance char
         case '\t':
             terminal_column += 4;
+            update_cursor(terminal_row, terminal_column);
             return;
         //Handle the carriage return;
         case '\r':
             terminal_column = 0;
+            update_cursor(terminal_row, terminal_column);
             return;
     }
 
@@ -75,16 +101,19 @@ void terminal_putchar(char c){
     video_memory[index] = c | attribute;
 
     //Move the cursor right
-    terminal_column++;
+   terminal_column++;
 
-    //Move to the next line if we hit the edge of the screen
     if (terminal_column >= SCREEN_WIDTH){
+    terminal_column = 0;
+    terminal_row++;
+}
 
-        terminal_column = 0;
-        terminal_row++; 
-    }
-   
+        if (terminal_row >= SCREEN_HEIGHT)
+        scroll_up();
 
+    update_cursor(terminal_row, terminal_column);
+        //Update the cursor position to the actual one
+    update_cursor(terminal_row, terminal_column);
 }
 
 //Loop throgh an entire string array until the null terminator
@@ -96,24 +125,25 @@ void terminal_write_string(const char* data){
     }
 }
 
-
-//Clear the screen
+//Put the terminal in initial position
 void terminal_initalize(void) 
 {
-    
-                
     for (int i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
         video_memory[i] = ' ' | attribute;
     }
-
     terminal_row = 0;
     terminal_column = 0;
-    
+
+    outb(0x3D4, 0x0A);
+    outb(0x3D5, 0x00);
+
+    outb(0x3D4, 0x0B);
+    outb(0x3D5, 0x0F);
+
 }
 
+void kernel_main(void){ 
 
-
-void kernel_main(void){
     //Initialize the clean canvas
     terminal_initalize();
 
